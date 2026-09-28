@@ -1,0 +1,112 @@
+/* ================= NEXUS LIGHT THEME =================
+   Activated via [data-theme="light"] on <html>.
+   System mode resolves to this automatically when the OS
+   prefers a light color scheme. */
+
+[data-theme='light'] {
+  --bg: #e9effa;
+  --bg2: #f4f7fe;
+  --panel: rgba(255, 255, 255, 0.85);
+  --line: rgba(37, 99, 235, 0.22);
+  --line-strong: rgba(37, 99, 235, 0.55);
+  --text: #0b1530;
+  --dim: #3d4f7a;
+  --faint: #7a8bb0;
+  --accent: #0284c7;
+  --accent2: #1d4ed8;
+  --violet: #7c3aed;
+  --teal: #0d9488;
+  --ok: #059669;
+}
+
+[data-theme='light'] .nx-loader { background: var(--bg); }
+
+[data-theme='light'] .nx-title {
+  background: linear-gradient(180deg, #0b1530 15%, #1e40af 60%, #0284c7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 26px rgba(37, 99, 235, 0.35));
+}
+
+[data-theme='light'] .nx-main {
+  background: linear-gradient(180deg, rgba(233,239,250,0) 0%, rgba(233,239,250,0.9) 120px, rgba(233,239,250,0.97) 100%);
+}
+
+[data-theme='light'] .nx-nav.scrolled {
+  background: rgba(244, 247, 254, 0.86);
+}
+
+[data-theme='light'] .nx-hud { background: rgba(255, 255, 255, 0.82); }
+
+[data-theme='light'] .nx-module-btn { background: rgba(255, 255, 255, 0.88); }
+[data-theme='light'] .nx-module-btn:hover {
+  background: rgba(37, 99, 235, 0.16);
+  color: #0b1530;
+}
+
+[data-theme='light'] .nx-shot-id { background: rgba(255, 255, 255, 0.92); }
+
+[data-theme='light'] .nx-tooltip { background: rgba(255, 255, 255, 0.95); }
+
+[data-theme='light'] .nx-preview {
+  background: linear-gradient(180deg, #f5f8ff 0%, #e6edfb 100%);
+  box-shadow: 0 30px 120px rgba(37, 99, 235, 0.3);
+}
+[data-theme='light'] .nx-preview-shot { background: #dbe4f5; }
+[data-theme='light'] .nx-preview-body > p { color: #33415f; }
+
+[data-theme='light'] .nx-prose { color: #33415f; }
+[data-theme='light'] .nx-stack-cat li { color: #33415f; }
+
+[data-theme='light'] .nx-canvas-wrap.dimmed {
+  filter: brightness(0.72) saturate(0.85);
+}
+
+[data-theme='light'] .nx-contact-box {
+  background: linear-gradient(180deg, rgba(37,99,235,.1), rgba(255,255,255,.5));
+}
+
+/* ================= THEME TOGGLE ================= */
+
+.nx-theme {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(4, 8, 20, 0.5);
+}
+[data-theme='light'] .nx-theme { background: rgba(255, 255, 255, 0.7); }
+
+.nx-theme button {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--line);
+  color: var(--faint);
+  padding: 8px 11px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+.nx-theme button:last-child { border-right: none; }
+.nx-theme button:hover { color: var(--accent); }
+.nx-theme button.active {
+  background: rgba(37, 99, 235, 0.28);
+  color: var(--accent);
+}
+[data-theme='light'] .nx-theme button.active {
+  background: rgba(37, 99, 235, 0.16);
+}
+.nx-theme button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.nx-theme svg { display: block; }
+
+.nx-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}

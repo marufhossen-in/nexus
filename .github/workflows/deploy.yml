@@ -1,0 +1,124 @@
+name: Universal Web Deployment to GitHub Pages
+
+on:
+  # 'main' অথবা 'master' ব্রাঞ্চে push হলে স্বয়ংক্রিয়ভাবে চলবে
+  push:
+    branches: ['main', 'master']
+
+  # GitHub Actions ট্যাব থেকে ম্যানুয়ালি রান করার জন্য
+  workflow_dispatch:
+
+# সিকিউরিটি এবং ডিপ্লয়মেন্টের জন্য প্রয়োজনীয় পারমিশন
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# একাধিক ডিপ্লয়মেন্ট একসাথে শুরু হলে রেস কন্ডিশন ঠেকাবে
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ১. স্বয়ংক্রিয়ভাবে Package Manager (npm, yarn, pnpm, bun) ডিটেক্ট করা
+      - name: Detect Package Manager
+        id: detect-package-manager
+        run: |
+          if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/bun.lockb" ] || [ -f "${{ github.workspace }}/bun.lock" ]; then
+            echo "manager=bun" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "manager=static" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      # ২. প্রয়োজন অনুযায়ী Bun সেটআপ করা
+      - name: Setup Bun
+        if: steps.detect-package-manager.outputs.manager == 'bun'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ৩. প্রয়োজন অনুযায়ী pnpm সেটআপ করা
+      - name: Setup pnpm
+        if: steps.detect-package-manager.outputs.manager == 'pnpm'
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+
+      # ৪. Node.js এবং ডিপেনডেন্সি ক্যাশিং সেটআপ করা
+      - name: Setup Node.js
+        if: steps.detect-package-manager.outputs.manager != 'static' && steps.detect-package-manager.outputs.manager != 'bun'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: ${{ steps.detect-package-manager.outputs.manager }}
+
+      # ৫. ডিপেনডেন্সি ইনস্টল করা
+      - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != 'static'
+        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
+      # ৬. প্রজেক্ট বিল্ড করা (যদি package.json এ build স্ক্রিপ্ট থাকে)
+      - name: Build project
+        if: steps.detect-package-manager.outputs.manager != 'static'
+        run: |
+          if [ -f "${{ github.workspace }}/package.json" ]; then
+            if grep -q '"build":' "${{ github.workspace }}/package.json"; then
+              ${{ steps.detect-package-manager.outputs.manager }} run build
+            fi
+          fi
+
+      # ৭. আউটপুট ফোল্ডার স্বয়ংক্রিয়ভাবে ডিটেক্ট করা (dist, out, build, public বা Root)
+      - name: Detect Output Directory
+        id: detect-output-dir
+        run: |
+          if [ -d "${{ github.workspace }}/dist" ]; then
+            echo "path=./dist" >> $GITHUB_OUTPUT
+          elif [ -d "${{ github.workspace }}/out" ]; then
+            echo "path=./out" >> $GITHUB_OUTPUT
+          elif [ -d "${{ github.workspace }}/build" ]; then
+            echo "path=./build" >> $GITHUB_OUTPUT
+          elif [ -d "${{ github.workspace }}/public" ]; then
+            echo "path=./public" >> $GITHUB_OUTPUT
+          else
+            echo "path=." >> $GITHUB_OUTPUT
+          fi
+
+      # ৮. সিঙ্গেল আর্টিফ্যাক্ট আপলোড (Duplicate Artifact Error সমাধান করবে)
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.detect-output-dir.outputs.path }}
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy to Pages
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
